@@ -213,10 +213,9 @@ console.log('');
 				_amt = undefined;
 				
 				const promise = BlockchainManager.sendSignedTransaction();
-				promise.throw(async function(){
-					//Just here to inhibit failures.
-				});
+				promise.throw(console.log);
 				const confirmation = async function(n, receipt){
+					console.log("confirmations: " + n);
 					if(n < 2 || !receipt){
 						return;
 					}
