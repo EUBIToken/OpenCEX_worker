@@ -125,6 +125,7 @@ console.log('');
 					try{
 						checkSafety2(err, "SQL Query returned error!");
 					} catch{
+						console.log("sqlerror: " + query);
 						return;
 					}
 					callback(res);
