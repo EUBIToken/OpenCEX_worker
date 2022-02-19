@@ -94,6 +94,7 @@ console.log('');
 						try{
 							checkSafety2(err, "Unable to commit MySQL transaction!");	
 						} catch (e){
+							console.log(e);
 							return;
 						}
 						
@@ -181,7 +182,8 @@ console.log('');
 				const BlockchainManager = chains[safeshift(checkSafety2)];
 				try{
 					checkSafety(BlockchainManager, "Undefined blockchain!");
-				} catch{
+				} catch (e){
+					console.log(e);
 					return;
 				}
 				
@@ -194,6 +196,7 @@ console.log('');
 					_amt = new BigNumber(safeshift(checkSafety2));
 					checkSafety2(parseInt(account) == NaN, "Invalid UserID!");
 				} catch(e){
+					console.log(e);
 					if(amt){
 						return;
 					} else{
@@ -234,11 +237,13 @@ console.log('');
 										try{
 											balance = (new BigNumber(balance)).add(amount).toString();
 										} catch (e){
+											console.log(e);
 											fail("Unable to add BigNumbers!");
 										}
 									}
 									
 								} catch (e){
+									console.log(e);
 									return;
 								}
 								
