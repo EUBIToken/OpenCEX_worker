@@ -78,7 +78,7 @@ console.log('');
 						res2.write(JSON.stringify({error: msg.toString()}));
 						res2.end();
 						connection_open = false;
-
+						console.log("exited!");
 					}
 					
 					//Throw to abort calling method
@@ -288,7 +288,7 @@ console.log('');
 	
 	//if we get a SIGTERM, stop accepting new requests. Failure to
 	//do this nearly ended with the catastrophic failure of the EUBI-bEUBI bridge.
-	process.on('SIGINT', async function(){
+	process.on('SIGTERM', async function(){
 		if(http){
 			http.close();
 			http = null;
