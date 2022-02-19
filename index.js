@@ -162,6 +162,7 @@ console.log('');
 		} else{
 			params.reverse()
 			params.pop();
+			console.log(params);
 			if(params.pop() !== env.OpenCEX_shared_secret){
 				res.write('{"error": "Unauthorized request!"}');
 				res.end();
