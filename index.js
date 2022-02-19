@@ -240,7 +240,7 @@ console.log('');
 				//auth/method/tx/account/token/amount
 				const BlockchainManager = chains[safeshift()];
 				try{
-					checkSafety(jobAborted, "Job timed out!");
+					checkSafety2(jobAborted, "Job timed out!");
 					checkSafety(BlockchainManager, "Undefined blockchain!");
 				} catch (e){
 					console.log(e);
@@ -255,7 +255,7 @@ console.log('');
 				try{
 					_amt = new BigNumber(safeshift());
 					checkSafety2(parseInt(account) == NaN, "Invalid UserID!");
-					checkSafety(jobAborted, "Job timed out!");
+					checkSafety2(jobAborted, "Job timed out!");
 				} catch(e){
 					console.log(e);
 					if(amt){
@@ -273,7 +273,7 @@ console.log('');
 				const amount = _amt;
 				_amt = undefined;
 				try{
-					checkSafety(jobAborted, "Job timed out!");
+					checkSafety2(jobAborted, "Job timed out!");
 				} catch{
 					return;
 				}
