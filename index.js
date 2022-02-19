@@ -55,6 +55,7 @@ console.log('');
 	//NOTE: f should not be an asynchronous function.
 	const useSQL = async function(response, f){
 		awaitSQL(async function(){
+			let jobid = undefined;
 			//Core safety methods
 			const unlockSQL = async function(){
 				//If there is nothing waiting to use SQL, unlock!
@@ -67,7 +68,7 @@ console.log('');
 				}
 			};
 			
-			let connection_open = true;
+			let connection_open = !!response; //If we are in connectionless mode, then this would come in handy!
 			let _tempfuncexport;
 			{
 				const res2 = response;
@@ -90,11 +91,10 @@ console.log('');
 			{
 				const res2 = response;
 				_tempfuncexport = async function(data, nocommit){
-					const handle = async function(err){
+					const handle2 = async function(err){
 						try{
 							checkSafety2(err, "Unable to commit MySQL transaction!");	
 						} catch (e){
-							console.log(e);
 							return;
 						}
 						
@@ -102,23 +102,31 @@ console.log('');
 							res2.write(JSON.stringify({returns: data}));
 							res2.end();
 							connection_open = false;
-							console.log("exited!");
 						}
-						
-						if(!nocommit){
+					};
+					const handle = async function(err){
+						if(nocommit){
 							unlockSQL();
+							try{
+								checkSafety2(err, "Unable to update worker task status!");	
+							} catch (e){
+								return;
+							}
+							
+							sql.query("COMMIT;", handle2);
+							
+						} else{
+							handle2(false);
 						}
 						
 					};
 					if(nocommit){
 						handle(false);
 					} else{
-						sql.query("COMMIT;", handle);
+						sql.query(["UPDATE WorkerTasks SET Status = 1 WHERE Id = ", sqlescape(jobid), ";"].join(""), handle);
 					}
 				};
 			}
-			const ret2 = _tempfuncexport;
-			_tempfuncexport = undefined;
 			response = undefined;
 			const safeQuery = async function(query, callback){
 				sql.query(query, async function(err, res){
@@ -133,11 +141,6 @@ console.log('');
 			};
 			
 			//Extended safety methods
-			const checkSafety = function(exp, msg){
-				if(!exp){
-					fail(msg);
-				}
-			};
 			
 			const checkSafety2 = function(exp, msg){
 				if(exp){
@@ -146,7 +149,19 @@ console.log('');
 			};
 			
 			safeQuery("START TRANSACTION;", async function(){
-				f(fail, checkSafety, checkSafety2, safeQuery, ret2);
+				f(fail, function(exp, msg){
+					if(!exp){
+						fail(msg);
+					}
+				}, checkSafety2, safeQuery, _tempfuncexport, function(ji){
+					try{
+						checkSafety2(jobid, "Job ID already set!");
+					} catch{
+						return;
+					}
+					jobid = ji;
+				});
+				_tempfuncexport = undefined;
 			});
 			
 			
@@ -155,7 +170,12 @@ console.log('');
 	let BigNumber = require('web3-utils').BN;
 	
 	let http = require('http').createServer(async function(req, res){
-		const params = req.url.split('/');
+		if(req.url.length == 0){
+			res.write('{"error": "Invalid request!"}');
+			res.end();
+		}
+		let url = req.url.substring(1);
+		const params = url.split('/');
 		const chains = [];
 		{
 			const eth = require('web3-eth');
@@ -168,26 +188,41 @@ console.log('');
 			return;
 		} else{
 			params.reverse()
-			params.pop();
 			if(decodeURIComponent(params.pop()) !== env.OpenCEX_shared_secret){
 				res.write('{"error": "Unauthorized request!"}');
 				res.end();
 				return;
 			}
 		}
+		useSQL(async function(fail, checkSafety, checkSafety2, safeQuery, ret2, setjobid){
+			//admit request to task queue (NOTE: strip authorization and initial spacer)
+			safeQuery(["INSERT INTO WorkerTasks (URL, LastTouched, Status) VALUES (", sqlescape(url.substring(url.indexOf("/") + 1)), ", ", sqlescape(Date.now().toString()), ", ", "0", ");"].join(''), async function(){
+				safeQuery('SELECT LAST_INSERT_ID();', async function(ji){
+					setjobid([0]["LAST_INSERT_ID()"]);
+					//execute request
+					executeRequest(params, res, fail, checkSafety, checkSafety2, safeQuery, ret2);
+				});
+				
+				
+			});
+			url = undefined;
+			
+			
+		});
 		
-		
-		const safeshift = function(checkSafety2){
+	});
+	const executeRequest = async function(params, res, fail, checkSafety, checkSafety2, safeQuery, ret2){
+		const safeshift = function(){
 			const result = params.pop();
 			checkSafety2(result === undefined, "Not enough parameters!");
 			return decodeURIComponent(result);
 		};
 		
 		const methods = {
-			sendAndCreditWhenSecure: async function(fail, checkSafety, checkSafety2, safeQuery, ret2){
+			sendAndCreditWhenSecure: async function(){
 				
 				//auth/method/tx/account/token/amount
-				const BlockchainManager = chains[safeshift(checkSafety2)];
+				const BlockchainManager = chains[safeshift()];
 				try{
 					checkSafety(BlockchainManager, "Undefined blockchain!");
 				} catch (e){
@@ -196,12 +231,12 @@ console.log('');
 				}
 				
 				
-				const tx = safeshift(checkSafety2);
-				const account = safeshift(checkSafety2);
-				const token = safeshift(checkSafety2);
+				const tx = safeshift();
+				const account = safeshift();
+				const token = safeshift();
 				let _amt = undefined;
 				try{
-					_amt = new BigNumber(safeshift(checkSafety2));
+					_amt = new BigNumber(safeshift());
 					checkSafety2(parseInt(account) == NaN, "Invalid UserID!");
 				} catch(e){
 					console.log(e);
@@ -221,11 +256,14 @@ console.log('');
 				_amt = undefined;
 				
 				const promise = BlockchainManager.sendSignedTransaction(tx);
+				let lock2 = false;
 				const confirmation = async function(n, receipt){
 					console.log("confirmations: " + n);
-					if(n < 2 || !receipt){
+					if(n < 2 || lock2 || !receipt){
 						return;
 					}
+					lock2 = true;
+					promise.off('confirmation', confirmation);
 					if(receipt.status){
 						safeQuery("LOCK TABLE Balances WRITE;", async function(){
 							const selector = [" WHERE Coin = ", sqlescape(token), " AND UserID = ", sqlescape(account), ";"].join("");
@@ -270,8 +308,6 @@ console.log('');
 							});
 						});
 					}
-					
-					promise.off('confirmation', confirmation);
 					return;
 				};
 				promise.on('confirmation', confirmation);
@@ -282,14 +318,13 @@ console.log('');
 		
 		const method = methods[params.pop()];
 		if(method){
-			useSQL(res, method);
-		} else{
+			res = undefined;
+			method();
+		} else if(res){
 			res.write('{"error": "Invalid request method!"}');
 			res.end();
 		}
-		
-		
-	});
+	};
 	http.listen(env.PORT || 80);
 	
 	
