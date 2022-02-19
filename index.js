@@ -35,19 +35,18 @@ console.log('');
 			SQL_queue.push(f);
 		} else{
 			SQL_locked = true;
-			console.log(f);
 			f();
 		}
 	};
 	
 	const awaitSQL = async function(f){
-		f = async function(){
+		const realcall = async function(){
 			lockSQL(f);
 		};
 		if(beforesqlavail){
-			beforesqlavail.push(f);
+			beforesqlavail.push(realcall);
 		} else{
-			f();
+			realcall();
 		}
 	};
 	
