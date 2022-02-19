@@ -176,11 +176,6 @@ console.log('');
 		}
 		let url = req.url.substring(1);
 		const params = url.split('/');
-		const chains = [];
-		{
-			const eth = require('web3-eth');
-			chains.polygon = new eth('https://polygon-rpc.com/');
-		}
 		
 		if(params.length < 3){
 			res.write('{"error": "Invalid request!"}');
@@ -218,7 +213,11 @@ console.log('');
 			checkSafety2(result === undefined, "Not enough parameters!");
 			return decodeURIComponent(result);
 		};
-		
+		const chains = [];
+		{
+			const eth = require('web3-eth');
+			chains.polygon = new eth('https://polygon-rpc.com/');
+		}
 		const methods = {
 			sendAndCreditWhenSecure: async function(){
 				
