@@ -174,7 +174,7 @@ console.log('');
 				});
 			});
 		});
-	});
+	};
 			
 	
 	let BigNumber = require('web3-utils').BN;
