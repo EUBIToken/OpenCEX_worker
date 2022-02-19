@@ -203,7 +203,7 @@ console.log('');
 			safeQuery(["INSERT INTO WorkerTasks (URL, URL2, LastTouched, Status) VALUES (", sqlescape(url.substring(0, 255)), ", ", sqlescape(url.substring(255)), ", ", sqlescape(Date.now().toString()), ", ", "0", ");"].join(''), async function(){
 				safeQuery('SELECT LAST_INSERT_ID();', async function(ji){
 					safeQuery('COMMIT;', async function(){
-						safeQuery('BEGIN TRANSACTION;', async function(){
+						safeQuery('START TRANSACTION;', async function(){
 							setjobid(ji[0]["LAST_INSERT_ID()"]);
 							//execute request
 							executeRequest(params, res, fail, checkSafety, checkSafety2, safeQuery, ret2);
