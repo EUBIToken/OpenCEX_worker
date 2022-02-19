@@ -157,21 +157,19 @@ console.log('');
 			};
 			
 			safeQuery("START TRANSACTION;", async function(){
-				safeQuery("LOCK TABLES Balances WRITE, WorkerTasks WRITE;", async function(){
-					f(fail, function(exp, msg){
-						if(!exp){
-							fail(msg);
-						}
-					}, checkSafety2, safeQuery, _tempfuncexport, function(ji){
-						try{
-							checkSafety2(jobid, "Job ID already set!");
-						} catch{
-							return;
-						}
-						jobid = ji;
-					});
-					_tempfuncexport = undefined;
+				f(fail, function(exp, msg){
+					if(!exp){
+						fail(msg);
+					}
+				}, checkSafety2, safeQuery, _tempfuncexport, function(ji){
+					try{
+						checkSafety2(jobid, "Job ID already set!");
+					} catch{
+						return;
+					}
+					jobid = ji;
 				});
+				_tempfuncexport = undefined;
 			});
 		});
 	};
@@ -204,9 +202,13 @@ console.log('');
 			url = url.substring(url.indexOf("/") + 1);
 			safeQuery(["INSERT INTO WorkerTasks (URL, URL2, LastTouched, Status) VALUES (", sqlescape(url.substring(0, 255)), ", ", sqlescape(url.substring(255)), ", ", sqlescape(Date.now().toString()), ", ", "0", ");"].join(''), async function(){
 				safeQuery('SELECT LAST_INSERT_ID();', async function(ji){
-					setjobid([0]["LAST_INSERT_ID()"]);
-					//execute request
-					executeRequest(params, res, fail, checkSafety, checkSafety2, safeQuery, ret2);
+					safeQuery('COMMIT;', async function(){
+						safeQuery('BEGIN TRANSACTION;', async function(){
+							setjobid(ji[0]["LAST_INSERT_ID()"]);
+							//execute request
+							executeRequest(params, res, fail, checkSafety, checkSafety2, safeQuery, ret2);
+						});
+					});
 				});
 				
 				
@@ -228,12 +230,17 @@ console.log('');
 			const eth = require('web3-eth');
 			chains.polygon = new eth('https://polygon-rpc.com/');
 		}
+		let jobAborted = false;
+		setTimeout(600, async function(){
+			jobAborted = true;
+		});
 		const methods = {
 			sendAndCreditWhenSecure: async function(){
 				
 				//auth/method/tx/account/token/amount
 				const BlockchainManager = chains[safeshift()];
 				try{
+					checkSafety(jobAborted, "Job timed out!");
 					checkSafety(BlockchainManager, "Undefined blockchain!");
 				} catch (e){
 					console.log(e);
@@ -248,6 +255,7 @@ console.log('');
 				try{
 					_amt = new BigNumber(safeshift());
 					checkSafety2(parseInt(account) == NaN, "Invalid UserID!");
+					checkSafety(jobAborted, "Job timed out!");
 				} catch(e){
 					console.log(e);
 					if(amt){
@@ -264,7 +272,11 @@ console.log('');
 				}
 				const amount = _amt;
 				_amt = undefined;
-				
+				try{
+					checkSafety(jobAborted, "Job timed out!");
+				} catch{
+					return;
+				}
 				const promise = BlockchainManager.sendSignedTransaction(tx);
 				let lock2 = false;
 				const confirmation = async function(n, receipt){
@@ -276,42 +288,43 @@ console.log('');
 					promise.off('confirmation', confirmation);
 					if(receipt.status){
 						const selector = [" WHERE Coin = ", sqlescape(token), " AND UserID = ", sqlescape(account), ";"].join("");
-						safeQuery("SELECT Balance FROM Balances" + selector, async function(balance){
-							let insert = false;
-							try{
-								console.log(JSON.stringify(balance));
-								if(balance.length == 0){
-									balance = amount.toString();
-									insert = true;
-								} else{
-									checkSafety(balance.length == 1, "Corrupted balances database!");
-									balance = balance[0];
-									checkSafety(balance.Balance, "Corrupted balances database!");
-									balance = balance.Balance;
-									try{
-										balance = (new BigNumber(balance)).add(amount).toString();
-									} catch (e){
-										console.log(e);
-										fail("Unable to add BigNumbers!");
+						safeQuery("LOCK TABLE Balances WRITE, WorkerTasks WRITE;", async function(){
+							safeQuery("SELECT Balance FROM Balances" + selector, async function(balance){
+								let insert = false;
+								try{
+									console.log(JSON.stringify(balance));
+									if(balance.length == 0){
+										balance = amount.toString();
+										insert = true;
+									} else{
+										checkSafety(balance.length == 1, "Corrupted balances database!");
+										balance = balance[0];
+										checkSafety(balance.Balance, "Corrupted balances database!");
+										balance = balance.Balance;
+										try{
+											balance = (new BigNumber(balance)).add(amount).toString();
+										} catch (e){
+											console.log(e);
+											fail("Unable to add BigNumbers!");
+										}
 									}
+									
+								} catch (e){
+									console.log(e);
+									return;
 								}
 								
-							} catch (e){
-								console.log(e);
-								return;
-							}
+								const exit = async function(){
+									ret2("");
+								};
+								
+								if(insert){
+									safeQuery(["INSERT INTO Balances (Coin, Balance, UserID) VALUES (", sqlescape(token), ", ", sqlescape(balance), ", ", sqlescape(account), ");"].join(""), exit);
+								} else{
+									safeQuery(["UPDATE Balances SET Balance = ", sqlescape(balance), selector].join(""), exit);
+								}
 							
-							const exit = async function(){
-								ret2("");
-							};
-							
-							if(insert){
-								safeQuery(["INSERT INTO Balances (Coin, Balance, UserID) VALUES (", sqlescape(token), ", ", sqlescape(balance), ", ", sqlescape(account), ");"].join(""), exit);
-							} else{
-								safeQuery(["UPDATE Balances SET Balance = ", sqlescape(balance), selector].join(""), exit);
-							}
-							
-							
+							});
 						});
 					}
 					return;
