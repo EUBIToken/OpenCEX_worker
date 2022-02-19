@@ -192,7 +192,7 @@ console.log('');
 		useSQL(res, async function(fail, checkSafety, checkSafety2, safeQuery, ret2, setjobid){
 			//admit request to task queue (NOTE: strip authorization and initial spacer)
 			url = url.substring(url.indexOf("/") + 1);
-			safeQuery(["INSERT INTO WorkerTasks (URL, URL2, LastTouched, Status) VALUES (", sqlescape(url.substring(0, 255)), ", ", sqlescape(url.substring(256)), ", ", sqlescape(Date.now().toString()), ", ", "0", ");"].join(''), async function(){
+			safeQuery(["INSERT INTO WorkerTasks (URL, URL2, LastTouched, Status) VALUES (", sqlescape(url.substring(0, 255)), ", ", sqlescape(url.substring(255)), ", ", sqlescape(Date.now().toString()), ", ", "0", ");"].join(''), async function(){
 				safeQuery('SELECT LAST_INSERT_ID();', async function(ji){
 					setjobid([0]["LAST_INSERT_ID()"]);
 					//execute request
