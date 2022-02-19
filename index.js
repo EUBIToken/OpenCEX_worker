@@ -173,9 +173,10 @@ console.log('');
 					_tempfuncexport = undefined;
 				});
 			});
-			
 		});
 	});
+			
+	
 	let BigNumber = require('web3-utils').BN;
 	
 	let http = require('http').createServer(async function(req, res){
