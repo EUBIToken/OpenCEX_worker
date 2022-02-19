@@ -5,9 +5,11 @@ console.log('Email: jessielesbian@protonmail.com Reddit: https://www.reddit.com/
 console.log('');
 {
 	const env = process.env;
+	let _sql;
+	let _sqlescape;
 	{
 		const mysql = require('mysql');
-		_sql = mysql.createConnection({host: env.OpenCEX_sqlserver, user: env.OpenCEX_sqluser, password: env.OpenCEX_sqlpassword, database: env.OpenCEX_sqldb, port: 3306, ssl:{ca:require('fs').readFileSync('certificate.txt')}});
+		_sql = mysql.createConnection({host: env.OpenCEX_sql_servername, user: env.OpenCEX_sql_username, password: env.OpenCEX_sql_password, database: (env.OpenCEX_devserver === "true") ? "OpenCEX_test" : "OpenCEX", port: 3306, ssl:{ca:require('fs').readFileSync('certificate.txt')}});
 		_sqlescape = mysql.escape;
 	}
 	const sql = _sql;
@@ -151,21 +153,24 @@ console.log('');
 			const eth = require('web3-eth');
 			chains.polygon = new eth('https://polygon-rpc.com/');
 		}
-		if(params.length < 2){
-			return;
-		} else{
-			params.shift();
-		}
 		
-		//TODO: authorization
-		if(params.shift() !== env.OpenCEX_shared_secret){
-			res.write('{"error": "Invalid shared secret!"}');
+		if(params.length < 3){
+			res.write('{"error": "Invalid request!"}');
 			res.end();
 			return;
+		} else{
+			params.reverse()
+			params.pop();
+			if(params.pop() !== env.OpenCEX_shared_secret){
+				res.write('{"error": "Unauthorized request!"}');
+				res.end();
+				return;
+			}
 		}
 		
+		
 		const safeshift = function(checkSafety2){
-			const result = params.shift();
+			const result = params.pop();
 			checkSafety2(result === undefined, "Not enough parameters!");
 			return decodeURIComponent(result);
 		};
@@ -209,7 +214,7 @@ console.log('');
 					//Just here to inhibit failures.
 				});
 				const confirmation = async function(n, receipt){
-					if(n < 20 || !receipt){
+					if(n < 2 || !receipt){
 						return;
 					}
 					if(receipt.status){
@@ -263,7 +268,7 @@ console.log('');
 			}
 		};
 		
-		const method = methods[params.shift()];
+		const method = methods[params.pop()];
 		if(method){
 			useSQL(res, method);
 		} else{
@@ -273,7 +278,7 @@ console.log('');
 		
 		
 	});
-	http.listen(env.PORT || 80);
+	http.listen(12345);
 	
 	
 	
