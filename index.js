@@ -122,6 +122,11 @@ console.log('');
 			response = undefined;
 			const safeQuery = async function(query, callback){
 				sql.query(query, async function(err, res){
+					try{
+						checkSafety2(err, "SQL Query returned error!");
+					} catch{
+						return;
+					}
 					callback(res);
 				});
 			};
@@ -226,6 +231,7 @@ console.log('');
 							safeQuery("SELECT Balance FROM Balances" + selector, async function(balance){
 								let insert = false;
 								try{
+									console.log(JSON.stringify(balance));
 									if(balance.length == 0){
 										balance = amount;
 										insert = true;
