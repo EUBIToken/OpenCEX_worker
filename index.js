@@ -32,6 +32,7 @@ console.log('');
 	const SQL_queue = [];
 	const lockSQL = async function(f){
 		if(SQL_locked){
+			throw "SQL Locked!";
 			SQL_queue.push(f);
 		} else{
 			SQL_locked = true;
@@ -179,11 +180,6 @@ console.log('');
 		
 		const methods = {
 			sendAndCreditWhenSecure: async function(fail, checkSafety, checkSafety2, safeQuery, ret2){
-				if(true){
-					console.log("It's not a SQL problem!");
-					ret2("", false);
-					return;
-				}
 				
 				//auth/method/tx/account/token/amount
 				const BlockchainManager = chains[safeshift(checkSafety2)];
