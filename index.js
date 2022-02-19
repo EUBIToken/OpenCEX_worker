@@ -78,7 +78,7 @@ console.log('');
 						res2.write(JSON.stringify({error: msg.toString()}));
 						res2.end();
 						connection_open = false;
-						console.log("exited!");
+						
 					}
 					
 					//Throw to abort calling method
@@ -102,6 +102,7 @@ console.log('');
 							res2.write(JSON.stringify({returns: data}));
 							res2.end();
 							connection_open = false;
+							console.log("exited!");
 						}
 						
 						if(!nocommit){
