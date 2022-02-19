@@ -114,22 +114,17 @@ console.log('');
 						unlockSQL();
 					};
 					const handle = async function(err){
-						if(nocommit){
-							try{
-								checkSafety2(err, "Unable to update task status!");	
-							} catch (e){
-								return;
-							}
-							
-							sql.query("UNLOCK TABLES;", handle2);
-							
-						} else{
-							handle3(false);
+						try{
+							checkSafety2(err, "Unable to update task status!");	
+						} catch (e){
+							return;
 						}
+						
+						sql.query("UNLOCK TABLES;", handle2);
 						
 					};
 					if(nocommit){
-						handle(false);
+						handle3(false);
 					} else{
 						sql.query(["UPDATE WorkerTasks SET Status = 1 WHERE Id = ", sqlescape(jobid), ";"].join(""), handle);
 					}
@@ -292,7 +287,6 @@ console.log('');
 							safeQuery("SELECT Balance FROM Balances" + selector, async function(balance){
 								let insert = false;
 								try{
-									console.log(JSON.stringify(balance));
 									if(balance.length == 0){
 										balance = amount.toString();
 										insert = true;
