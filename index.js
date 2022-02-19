@@ -32,10 +32,10 @@ console.log('');
 	const SQL_queue = [];
 	const lockSQL = function(f){
 		if(SQL_locked){
-			throw "SQL Locked!";
 			SQL_queue.push(f);
 		} else{
 			SQL_locked = true;
+			console.log(f);
 			f();
 		}
 	};
