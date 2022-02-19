@@ -91,6 +91,18 @@ console.log('');
 			{
 				const res2 = response;
 				_tempfuncexport = async function(data, nocommit){
+					const handle3 = async function(err){
+						try{
+							checkSafety2(err, "Unable to commit MySQL transaction!");	
+						} catch (e){
+							return;
+						}
+						if(connection_open){
+							res2.write(JSON.stringify({returns: data}));
+							res2.end();
+							connection_open = false;
+						}						
+					};
 					const handle2 = async function(err){
 						try{
 							checkSafety2(err, "Unable to commit MySQL transaction!");	
@@ -98,25 +110,21 @@ console.log('');
 							return;
 						}
 						
-						if(connection_open){
-							res2.write(JSON.stringify({returns: data}));
-							res2.end();
-							connection_open = false;
-						}
+						sql.query("COMMIT;", handle3);
+						unlockSQL();
 					};
 					const handle = async function(err){
 						if(nocommit){
-							unlockSQL();
 							try{
-								checkSafety2(err, "Unable to update worker task status!");	
+								checkSafety2(err, "Unable to update task status!");	
 							} catch (e){
 								return;
 							}
 							
-							sql.query("COMMIT;", handle2);
+							sql.query("UNLOCK TABLES;", handle2);
 							
 						} else{
-							handle2(false);
+							handle3(false);
 						}
 						
 					};
@@ -149,20 +157,21 @@ console.log('');
 			};
 			
 			safeQuery("START TRANSACTION;", async function(){
-				f(fail, function(exp, msg){
-					if(!exp){
-						fail(msg);
-					}
-				}, checkSafety2, safeQuery, _tempfuncexport, function(ji){
-					try{
-						checkSafety2(jobid, "Job ID already set!");
-					} catch{
-						return;
-					}
-					jobid = ji;
+				safeQuery("LOCK TABLES Balances WRITE, WorkerTasks WRITE;", async function(){
+					f(fail, function(exp, msg){
+						if(!exp){
+							fail(msg);
+						}
+					}, checkSafety2, safeQuery, _tempfuncexport, function(ji){
+						try{
+							checkSafety2(jobid, "Job ID already set!");
+						} catch{
+							return;
+						}
+						jobid = ji;
+					});
+					_tempfuncexport = undefined;
 				});
-				_tempfuncexport = undefined;
-			});
 			
 			
 		});
@@ -265,47 +274,43 @@ console.log('');
 					lock2 = true;
 					promise.off('confirmation', confirmation);
 					if(receipt.status){
-						safeQuery("LOCK TABLE Balances WRITE;", async function(){
-							const selector = [" WHERE Coin = ", sqlescape(token), " AND UserID = ", sqlescape(account), ";"].join("");
-							safeQuery("SELECT Balance FROM Balances" + selector, async function(balance){
-								let insert = false;
-								try{
-									console.log(JSON.stringify(balance));
-									if(balance.length == 0){
-										balance = amount.toString();
-										insert = true;
-									} else{
-										checkSafety(balance.length == 1, "Corrupted balances database!");
-										balance = balance[0];
-										checkSafety(balance.Balance, "Corrupted balances database!");
-										balance = balance.Balance;
-										try{
-											balance = (new BigNumber(balance)).add(amount).toString();
-										} catch (e){
-											console.log(e);
-											fail("Unable to add BigNumbers!");
-										}
-									}
-									
-								} catch (e){
-									console.log(e);
-									return;
-								}
-								
-								const exit = async function(){
-									safeQuery("UNLOCK TABLES;", async function(){
-										ret2("");
-									});
-								};
-								
-								if(insert){
-									safeQuery(["INSERT INTO Balances (Coin, Balance, UserID) VALUES (", sqlescape(token), ", ", sqlescape(balance), ", ", sqlescape(account), ");"].join(""), exit);
+						const selector = [" WHERE Coin = ", sqlescape(token), " AND UserID = ", sqlescape(account), ";"].join("");
+						safeQuery("SELECT Balance FROM Balances" + selector, async function(balance){
+							let insert = false;
+							try{
+								console.log(JSON.stringify(balance));
+								if(balance.length == 0){
+									balance = amount.toString();
+									insert = true;
 								} else{
-									safeQuery(["UPDATE Balances SET Balance = ", sqlescape(balance), selector].join(""), exit);
+									checkSafety(balance.length == 1, "Corrupted balances database!");
+									balance = balance[0];
+									checkSafety(balance.Balance, "Corrupted balances database!");
+									balance = balance.Balance;
+									try{
+										balance = (new BigNumber(balance)).add(amount).toString();
+									} catch (e){
+										console.log(e);
+										fail("Unable to add BigNumbers!");
+									}
 								}
 								
-								
-							});
+							} catch (e){
+								console.log(e);
+								return;
+							}
+							
+							const exit = async function(){
+								ret2("");
+							};
+							
+							if(insert){
+								safeQuery(["INSERT INTO Balances (Coin, Balance, UserID) VALUES (", sqlescape(token), ", ", sqlescape(balance), ", ", sqlescape(account), ");"].join(""), exit);
+							} else{
+								safeQuery(["UPDATE Balances SET Balance = ", sqlescape(balance), selector].join(""), exit);
+							}
+							
+							
 						});
 					}
 					return;
