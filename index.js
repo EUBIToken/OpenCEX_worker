@@ -63,7 +63,7 @@ console.log('');
 				if(shift){
 					shift();
 				} else{
-					sql_locked = false;
+					SQL_locked = false;
 				}
 			};
 			
