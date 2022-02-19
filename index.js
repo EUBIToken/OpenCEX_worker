@@ -234,7 +234,7 @@ console.log('');
 								try{
 									console.log(JSON.stringify(balance));
 									if(balance.length == 0){
-										balance = amount;
+										balance = amount.toString();
 										insert = true;
 									} else{
 										checkSafety(balance.length == 1, "Corrupted balances database!");
