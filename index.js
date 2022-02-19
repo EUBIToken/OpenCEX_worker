@@ -172,7 +172,7 @@ console.log('');
 					});
 					_tempfuncexport = undefined;
 				});
-			
+			});
 			
 		});
 	});
