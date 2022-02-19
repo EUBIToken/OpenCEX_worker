@@ -228,7 +228,7 @@ console.log('');
 					}
 					if(receipt.status){
 						safeQuery("LOCK TABLE Balances WRITE;", async function(){
-							const selector = [" WHERE Coin = '", sqlescape(token), "' AND UserID = ", account, ";"].join("");
+							const selector = [" WHERE Coin = ", sqlescape(token), " AND UserID = ", sqlescape(account), ";"].join("");
 							safeQuery("SELECT Balance FROM Balances" + selector, async function(balance){
 								let insert = false;
 								try{
@@ -261,9 +261,9 @@ console.log('');
 								};
 								
 								if(insert){
-									safeQuery(["INSERT INTO Balances (Coin, Balance, UserID) VALUES ('", sqlescape(token), "', '", sqlescape(balance), "', ", sqlescape(account), ");"].join(""), exit);
+									safeQuery(["INSERT INTO Balances (Coin, Balance, UserID) VALUES (", sqlescape(token), ", ", sqlescape(balance), ", ", sqlescape(account), ");"].join(""), exit);
 								} else{
-									safeQuery(["UPDATE Balances SET Balance = '", sqlescape(balance), "'", selector].join(""), exit);
+									safeQuery(["UPDATE Balances SET Balance = ", sqlescape(balance), selector].join(""), exit);
 								}
 								
 								
