@@ -231,9 +231,9 @@ console.log('');
 			chains.polygon = new eth('https://polygon-rpc.com/');
 		}
 		let jobAborted = false;
-		setTimeout(600, async function(){
+		setTimeout(async function(){
 			jobAborted = true;
-		});
+		}, 600);
 		const methods = {
 			sendAndCreditWhenSecure: async function(){
 				
