@@ -179,6 +179,12 @@ console.log('');
 		
 		const methods = {
 			sendAndCreditWhenSecure: async function(fail, checkSafety, checkSafety2, safeQuery, ret2){
+				if(true){
+					console.log("It's not a SQL problem!");
+					ret2("", false);
+					return;
+				}
+				
 				//auth/method/tx/account/token/amount
 				const BlockchainManager = chains[safeshift(checkSafety2)];
 				try{
