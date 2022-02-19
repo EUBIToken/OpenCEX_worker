@@ -278,7 +278,7 @@ console.log('');
 		
 		
 	});
-	http.listen(12345);
+	http.listen(env.PORT || 80);
 	
 	
 	
