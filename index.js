@@ -96,7 +96,7 @@ console.log('');
 					const handle3 = async function(err){
 						try{
 							checkSafety2(err, "Unable to commit MySQL transaction!");	
-						} catch (e){
+						} catch {
 							return;
 						}
 						if(connection_open){
@@ -108,7 +108,7 @@ console.log('');
 					const handle2 = async function(err){
 						try{
 							checkSafety2(err, "Unable to commit MySQL transaction!");	
-						} catch (e){
+						} catch {
 							return;
 						}
 						
@@ -127,7 +127,7 @@ console.log('');
 					const handle = async function(err){
 						try{
 							checkSafety2(err, "Unable to update task status!");	
-						} catch (e){
+						} catch {
 							return;
 						}
 						
@@ -147,7 +147,6 @@ console.log('');
 					try{
 						checkSafety2(err, "SQL Query returned error!");
 					} catch{
-						console.log("sqlerror: " + query);
 						return;
 					}
 					callback(res);
@@ -234,6 +233,7 @@ console.log('');
 		{
 			const eth = require('web3-eth');
 			chains.polygon = new eth('https://polygon-rpc.com/');
+			chains.mintme = new eth('https://node1.mintme.com:443');
 		}
 		let jobAborted = false;
 		setTimeout(async function(){
@@ -247,8 +247,7 @@ console.log('');
 				try{
 					checkSafety2(jobAborted, "Job timed out!");
 					checkSafety(BlockchainManager, "Undefined blockchain!");
-				} catch (e){
-					console.log(e);
+				} catch{
 					return;
 				}
 				
@@ -261,8 +260,7 @@ console.log('');
 					_amt = new BigNumber(safeshift());
 					checkSafety2(parseInt(account) == NaN, "Invalid UserID!");
 					checkSafety2(jobAborted, "Job timed out!");
-				} catch(e){
-					console.log(e);
+				} catch{
 					if(amt){
 						return;
 					} else{
@@ -270,7 +268,7 @@ console.log('');
 							//Will-throw guarantee
 							fail("Invalid amount!");
 							throw "";
-						} catch(e){
+						} catch{
 							return;
 						}
 					}
@@ -285,7 +283,6 @@ console.log('');
 				const promise = BlockchainManager.sendSignedTransaction(tx);
 				let lock2 = false;
 				const confirmation = async function(n, receipt){
-					console.log("confirmations: " + n);
 					if(n < 2 || lock2 || !receipt){
 						return;
 					}
@@ -307,14 +304,12 @@ console.log('');
 										balance = balance.Balance;
 										try{
 											balance = (new BigNumber(balance)).add(amount).toString();
-										} catch (e){
-											console.log(e);
+										} catch {
 											fail("Unable to add BigNumbers!");
 										}
 									}
 									
-								} catch (e){
-									console.log(e);
+								} catch {
 									return;
 								}
 								
