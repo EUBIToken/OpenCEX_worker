@@ -57,7 +57,7 @@ console.log('');
 		awaitSQL(async function(){
 			let jobid = undefined;
 			//Core safety methods
-			const unlockSQL = async function(){
+			const unlockSQL_sync = function(){
 				//If there is nothing waiting to use SQL, unlock!
 				//otherwise, execute next SQL-using task without releasing and reacquiring lock!
 				const shift = SQL_queue.shift();
@@ -67,14 +67,16 @@ console.log('');
 					SQL_locked = false;
 				}
 			};
+			const unlockSQL = async function(){
+				unlockSQL_sync();
+			};
 			
 			let connection_open = !!response; //If we are in connectionless mode, then this would come in handy!
 			let _tempfuncexport;
 			{
 				const res2 = response;
 				_tempfuncexport = function(msg){
-					sql.query("ROLLBACK;");
-					unlockSQL();
+					sql.query("ROLLBACK;", unlockSQL);
 					if(connection_open){
 						res2.write(JSON.stringify({error: msg.toString()}));
 						res2.end();
@@ -110,8 +112,17 @@ console.log('');
 							return;
 						}
 						
-						sql.query("COMMIT;", handle3);
-						unlockSQL();
+						sql.query("COMMIT;", async function(err){
+							if(err){
+								handle3(true);
+							} else{
+								unlockSQL_sync();
+								handle3(false);
+							}
+							
+							
+						});
+						
 					};
 					const handle = async function(err){
 						try{
@@ -164,7 +175,6 @@ console.log('');
 					}
 					jobid = ji;
 				});
-				_tempfuncexport = undefined;
 			});
 		});
 	};
