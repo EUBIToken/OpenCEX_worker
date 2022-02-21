@@ -240,7 +240,7 @@ console.log('');
 		const chains = [];
 		{
 			const eth = require('web3-eth');
-			chains.polygon = new eth('https://polygon-rpc.com/');
+			chains.polygon = new eth('https://speedy-nodes-nyc.moralis.io/41590f438df3f8018a1e84b1/polygon/mainnet/archive');
 			chains.mintme = new eth('https://node1.mintme.com:443');
 		}
 		let jobAborted = false;
