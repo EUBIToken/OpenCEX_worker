@@ -335,6 +335,8 @@ console.log('');
 								
 								});
 							});
+						} else{
+							ret2("");
 						}
 						return;
 					};
@@ -432,6 +434,7 @@ console.log('');
 					setjobid(id);
 					const p3 = (result.URL + result.URL2).split("/");
 					p3.reverse();
+					console.log(JSON.stringify(p3));
 					executeRequest(p3, undefined, fail, checkSafety, checkSafety2, safeQuery, ret2, id);
 				}
 			});
