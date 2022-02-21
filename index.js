@@ -403,6 +403,8 @@ console.log('');
 	setInterval(async function(){
 		useSQL(undefined, async function(fail, checkSafety, checkSafety2, safeQuery, ret2, setjobid){
 			safeQuery("SELECT * FROM WorkerTasks ORDER BY Id DESC LIMIT 1;", async function(result){
+				checkSafety(result.length == 0, "Corrupted pending tasks database!");
+				result = result[0];
 				const id = parseInt(result.Id);
 				setjobid(id);
 				executeRequest((result.URL + result.URL2).split("/"), undefined, fail, checkSafety, checkSafety2, safeQuery, ret2, id);
