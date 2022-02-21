@@ -246,6 +246,7 @@ console.log('');
 		}, 600000);
 		const methods = {
 			sendAndCreditWhenSecure: async function(){
+				console.log("sendAndCreditWhenSecure");
 				
 				//auth/method/tx/account/token/amount
 				const BlockchainManager = chains[safeshift()];
@@ -367,7 +368,6 @@ console.log('');
 					safeQuery("LOCK TABLE WorkerTasks WRITE;", async function(){
 						safeQuery(["UPDATE WorkerTasks SET Status = 2 WHERE Id = ", sqlescape(jobid), ";"].join(""), async function(){
 							innerCompartment(promise);
-							console.log("entered!");
 						});
 					});
 				};
@@ -396,9 +396,12 @@ console.log('');
 			}
 		};
 		
+		
+		
 		const method = methods[params.pop()];
 		if(method){
-			res = undefined;
+			res = !!res;
+			console.log("request parsed!");
 			method();
 		} else if(res){
 			res.write('{"error": "Invalid request method!"}');
