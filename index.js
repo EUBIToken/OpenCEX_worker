@@ -432,7 +432,7 @@ console.log('');
 			});
 		});
 
-	});
+	}, 1000);
 	
 	
 	//if we get a SIGTERM, stop accepting new requests. Failure to
