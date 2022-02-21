@@ -355,9 +355,11 @@ console.log('');
 									if(!receipt){
 										return;
 									}
+									console.log(receipt.blockNumber);
 									if(!receipt.blockNumber){
 										return;
 									}
+									
 									BlockchainManager.getBlockNumber(async function(blocknumber2){
 										console.log(blocknumber2);
 										if(blocknumber2){
