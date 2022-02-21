@@ -430,7 +430,9 @@ console.log('');
 				if(Date.now() > parseInt(result.Timestamp) + 900000){
 					const id = parseInt(result.Id);
 					setjobid(id);
-					executeRequest((result.URL + result.URL2).split("/"), undefined, fail, checkSafety, checkSafety2, safeQuery, ret2, id);
+					const p3 = (result.URL + result.URL2).split("/");
+					p3.reverse();
+					executeRequest(p3, undefined, fail, checkSafety, checkSafety2, safeQuery, ret2, id);
 				}
 			});
 		});
