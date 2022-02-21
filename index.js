@@ -65,7 +65,9 @@ console.log('');
 					shift();
 				} else{
 					SQL_locked = false;
+					console.log("SQL unlocked!");
 				}
+				
 			};
 			const unlockSQL = async function(){
 				unlockSQL_sync();
@@ -164,7 +166,6 @@ console.log('');
 			};
 			
 			safeQuery("START TRANSACTION;", async function(){
-				console.log("Works here");
 				f(fail, function(exp, msg){
 					if(!exp){
 						fail(msg);
