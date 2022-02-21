@@ -33,7 +33,6 @@ console.log('');
 	const lockSQL = function(f){
 		if(SQL_locked){
 			SQL_queue.push(f);
-			console.log(SQL_queue.length);
 		} else{
 			SQL_locked = true;
 			f();
@@ -409,6 +408,9 @@ console.log('');
 	
 	//Start scouring the taskqueue for failed tasks
 	setInterval(async function(){
+		if(SQL_locked){
+			return; //Don't proceed with SQL locked
+		}
 		useSQL(undefined, async function(fail, checkSafety, checkSafety2, safeQuery, ret2, setjobid){
 			safeQuery("SELECT * FROM WorkerTasks ORDER BY Id DESC LIMIT 1;", async function(result){
 				try{
