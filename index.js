@@ -293,7 +293,6 @@ console.log('');
 				const innerCompartment = async function(promise){
 					let lock2 = false;
 					const confirmation = async function(n, receipt){
-						console.log(n);
 						if(n < 2 || lock2 || !receipt){
 							return;
 						}
@@ -361,7 +360,7 @@ console.log('');
 									}
 									
 									BlockchainManager.getBlockNumber(async function(blocknumber2){
-										console.log(blocknumber2);
+										console.log("Block number: " + blocknumber2.toString());
 										if(blocknumber2){
 											confirmation(blocknumber2 - receipt.blockNumber, receipt);
 										} else{
