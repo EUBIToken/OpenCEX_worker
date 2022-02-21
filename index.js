@@ -291,7 +291,7 @@ console.log('');
 				const innerCompartment = async function(promise){
 					let lock2 = false;
 					const confirmation = async function(n, receipt){
-						if(n < 2 || lock2 || !receipt){
+						if(n < 10 || lock2 || !receipt){
 							return;
 						}
 						lock2 = true;
