@@ -164,6 +164,7 @@ console.log('');
 			};
 			
 			safeQuery("START TRANSACTION;", async function(){
+				console.log("Works here");
 				f(fail, function(exp, msg){
 					if(!exp){
 						fail(msg);
@@ -191,7 +192,7 @@ console.log('');
 			res.write('{"error": "Invalid request!"}');
 			res.end();
 		}
-		console.log(req.url);
+
 		let url = req.url.substring(1);
 		const params = url.split('/');
 		
@@ -225,7 +226,7 @@ console.log('');
 			});
 			url = undefined;
 			
-			console.log("useSQL");
+			
 		});
 		
 	});
