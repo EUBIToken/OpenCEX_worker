@@ -137,7 +137,7 @@ console.log('');
 					if(nocommit){
 						handle3(false);
 					} else{
-						sql.query(["UPDATE WorkerTasks SET Status = 1 WHERE Id = ", sqlescape(jobid), ";"].join(""), handle);
+						sql.query(["DELETE FROM WorkerTasks WHERE Id = ", sqlescape(jobid), ";"].join(""), handle);
 					}
 				};
 			}
@@ -179,7 +179,10 @@ console.log('');
 	};
 			
 	
-	let BigNumber = require('web3-utils').BN;
+	let web3utils = require('web3-utils');
+	const BigNumber = web3utils.BN;
+	const web3_sha3 = web3utils.sha3;
+	web3utils = undefined;
 	
 	let http = require('http').createServer(async function(req, res){
 		if(req.url.length == 0){
@@ -210,7 +213,7 @@ console.log('');
 						safeQuery('START TRANSACTION;', async function(){
 							setjobid(ji[0]["LAST_INSERT_ID()"]);
 							//execute request
-							executeRequest(params, res, fail, checkSafety, checkSafety2, safeQuery, ret2);
+							executeRequest(params, res, fail, checkSafety, checkSafety2, safeQuery, ret2, ji[0]["LAST_INSERT_ID()"]);
 						});
 					});
 				});
@@ -223,7 +226,7 @@ console.log('');
 		});
 		
 	});
-	const executeRequest = async function(params, res, fail, checkSafety, checkSafety2, safeQuery, ret2){
+	const executeRequest = async function(params, res, fail, checkSafety, checkSafety2, safeQuery, ret2, jobid){
 		const safeshift = function(){
 			const result = params.pop();
 			checkSafety2(result === undefined, "Not enough parameters!");
@@ -238,7 +241,7 @@ console.log('');
 		let jobAborted = false;
 		setTimeout(async function(){
 			jobAborted = true;
-		}, 600);
+		}, 600000);
 		const methods = {
 			sendAndCreditWhenSecure: async function(){
 				
@@ -280,57 +283,108 @@ console.log('');
 				} catch{
 					return;
 				}
-				const promise = BlockchainManager.sendSignedTransaction(tx);
-				let lock2 = false;
-				const confirmation = async function(n, receipt){
-					if(n < 2 || lock2 || !receipt){
-						return;
-					}
-					lock2 = true;
-					promise.off('confirmation', confirmation);
-					if(receipt.status){
-						const selector = [" WHERE Coin = ", sqlescape(token), " AND UserID = ", sqlescape(account), ";"].join("");
-						safeQuery("LOCK TABLE Balances WRITE, WorkerTasks WRITE;", async function(){
-							safeQuery("SELECT Balance FROM Balances" + selector, async function(balance){
-								let insert = false;
-								try{
-									if(balance.length == 0){
-										balance = amount.toString();
-										insert = true;
-									} else{
-										checkSafety(balance.length == 1, "Corrupted balances database!");
-										balance = balance[0];
-										checkSafety(balance.Balance, "Corrupted balances database!");
-										balance = balance.Balance;
-										try{
-											balance = (new BigNumber(balance)).add(amount).toString();
-										} catch {
-											fail("Unable to add BigNumbers!");
+				
+				const innerCompartment = async function(promise){
+					let lock2 = false;
+					const confirmation = async function(n, receipt){
+						if(n < 2 || lock2 || !receipt){
+							return;
+						}
+						lock2 = true;
+						promise.off('confirmation', confirmation);
+						if(receipt.status){
+							const selector = [" WHERE Coin = ", sqlescape(token), " AND UserID = ", sqlescape(account), ";"].join("");
+							safeQuery("LOCK TABLE Balances WRITE, WorkerTasks WRITE;", async function(){
+								safeQuery("SELECT Balance FROM Balances" + selector, async function(balance){
+									let insert = false;
+									try{
+										if(balance.length == 0){
+											balance = amount.toString();
+											insert = true;
+										} else{
+											checkSafety(balance.length == 1, "Corrupted balances database!");
+											balance = balance[0];
+											checkSafety(balance.Balance, "Corrupted balances database!");
+											balance = balance.Balance;
+											try{
+												balance = (new BigNumber(balance)).add(amount).toString();
+											} catch {
+												fail("Unable to add BigNumbers!");
+											}
 										}
+										
+									} catch {
+										return;
 									}
 									
-								} catch {
-									return;
-								}
+									const exit = async function(){
+										ret2("");
+									};
+									
+									if(insert){
+										safeQuery(["INSERT INTO Balances (Coin, Balance, UserID) VALUES (", sqlescape(token), ", ", sqlescape(balance), ", ", sqlescape(account), ");"].join(""), exit);
+									} else{
+										safeQuery(["UPDATE Balances SET Balance = ", sqlescape(balance), selector].join(""), exit);
+									}
 								
-								const exit = async function(){
-									ret2("");
-								};
-								
-								if(insert){
-									safeQuery(["INSERT INTO Balances (Coin, Balance, UserID) VALUES (", sqlescape(token), ", ", sqlescape(balance), ", ", sqlescape(account), ");"].join(""), exit);
-								} else{
-									safeQuery(["UPDATE Balances SET Balance = ", sqlescape(balance), selector].join(""), exit);
-								}
-							
+								});
 							});
-						});
+						}
+						return;
+					};
+					if(res){
+						promise.on('confirmation', confirmation);
+					} else{
+						const hash = web3_sha3(tx, { encoding: "hex" });
+						const interval = setInterval(async function(){
+							if(jobAborted || lock2){
+								clearInterval(interval);
+							} else{
+								BlockchainManager.getTransactionReceipt(hash, async function(receipt){
+									if(!receipt){
+										return;
+									}
+									if(!receipt.blockNumber){
+										return;
+									}
+									BlockchainManager.getBlockNumber(async function(blocknumber2){
+										if(blocknumber2){
+											confirmation(receipt, (new BigNumber(blocknumber2)).sub(new BigNumber(receipt.blockNumber)).toString());
+										} else{
+											return;
+										}
+									});
+								});
+							}
+						}, 1000);
 					}
-					return;
+					ret2("", true);
 				};
-				promise.on('confirmation', confirmation);
 				
-				ret2("", true);
+				const innerCompartment2 = async function(receipt){
+					safeQuery("LOCK TABLE WorkerTasks WRITE;", async function(){
+						safeQuery(["UPDATE WorkerTasks SET Status = 2 WHERE Id = ", sqlescape(jobid), ";"].join(""), async function(){
+							innerCompartment(receipt);
+						});
+					});
+				};
+				
+				if(res){
+					innerCompartment2(BlockchainManager.sendSignedTransaction(tx));
+				} else{
+					safeQuery(["SELECT Status FROM WorkerTasks WHERE Id = ", sqlescape(jobid), ";"].join(""), async function(result){
+						checkSafety(result.length == 1, "Corrupted task queue!");
+						checkSafety(result[0].Status, "Corrupted task queue!");
+						if(result[0].Status == '2'){
+							innerCompartment({on: async function(){}, off: async function(){}});
+						} else{
+							innerCompartment2(BlockchainManager.sendSignedTransaction(tx));
+						}
+						
+					});
+					
+				}
+				
 			}
 		};
 		
@@ -345,6 +399,17 @@ console.log('');
 	};
 	http.listen(env.PORT || 80);
 	
+	//Start scouring the taskqueue for failed tasks
+	setInterval(async function(){
+		useSQL(undefined, async function(fail, checkSafety, checkSafety2, safeQuery, ret2, setjobid){
+			safeQuery("SELECT * FROM WorkerTasks ORDER BY Id DESC LIMIT 1;", async function(result){
+				const id = parseInt(result.Id);
+				setjobid(id);
+				executeRequest(result.Params.split("/"), undefined, fail, checkSafety, checkSafety2, safeQuery, ret2, id);
+			});
+		});
+
+	});
 	
 	
 	//if we get a SIGTERM, stop accepting new requests. Failure to
