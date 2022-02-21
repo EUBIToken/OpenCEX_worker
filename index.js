@@ -191,6 +191,7 @@ console.log('');
 			res.write('{"error": "Invalid request!"}');
 			res.end();
 		}
+		console.log(req.url);
 		let url = req.url.substring(1);
 		const params = url.split('/');
 		
