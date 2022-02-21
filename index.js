@@ -84,6 +84,8 @@ console.log('');
 						
 					}
 					
+					console.error("ASSERTION FAILURE: " + msg);
+					
 					//Throw to abort calling method
 					//NOTE: calling method must return after catching exception!
 					throw "";
