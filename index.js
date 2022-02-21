@@ -363,10 +363,11 @@ console.log('');
 					ret2("", true);
 				};
 				
-				const innerCompartment2 = async function(receipt){
+				const innerCompartment2 = async function(promise){
 					safeQuery("LOCK TABLE WorkerTasks WRITE;", async function(){
 						safeQuery(["UPDATE WorkerTasks SET Status = 2 WHERE Id = ", sqlescape(jobid), ";"].join(""), async function(){
-							innerCompartment(receipt);
+							innerCompartment(promise);
+							console.log("entered!");
 						});
 					});
 				};
@@ -426,7 +427,6 @@ console.log('');
 					executeRequest((result.URL + result.URL2).split("/"), undefined, fail, checkSafety, checkSafety2, safeQuery, ret2, id);
 				}
 			});
-			console.log("entered!");
 		});
 
 	});
