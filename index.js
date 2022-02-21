@@ -429,7 +429,7 @@ console.log('');
 				}
 				
 				result = result[0];
-				if(Date.now() > parseInt(result.Timestamp) + 900000){
+				if(Date.now() > parseInt(result.LastTouched) + 900000){
 					const id = parseInt(result.Id);
 					setjobid(id);
 					const p3 = (result.URL + result.URL2).split("/");
