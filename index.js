@@ -358,7 +358,7 @@ console.log('');
 									if(!receipt.blockNumber){
 										return;
 									}
-									BlockchainManager.getBlockNumber(async function(error, blocknumber2){
+									BlockchainManager.getBlockNumber(async function(blocknumber2){
 										if(blocknumber2){
 											confirmation(blocknumber2 - receipt.blockNumber, receipt);
 										} else{
