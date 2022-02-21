@@ -345,11 +345,11 @@ console.log('');
 					} else{
 						const hash = web3_sha3(tx, { encoding: "hex" });
 						const interval = setInterval(async function(){
-							console.log("interval");
 							if(jobAborted || lock2){
 								clearInterval(interval);
 							} else{
 								BlockchainManager.getTransactionReceipt(hash, async function(receipt){
+									console.log(JSON.stringify(receipt));
 									if(!receipt){
 										return;
 									}
@@ -358,7 +358,7 @@ console.log('');
 									}
 									BlockchainManager.getBlockNumber(async function(blocknumber2){
 										if(blocknumber2){
-											confirmation(receipt, (new BigNumber(blocknumber2)).sub(new BigNumber(receipt.blockNumber)).toString());
+											confirmation(receipt, blocknumber2 - receipt.blockNumber);
 										} else{
 											return;
 										}
