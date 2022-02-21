@@ -405,7 +405,7 @@ console.log('');
 			safeQuery("SELECT * FROM WorkerTasks ORDER BY Id DESC LIMIT 1;", async function(result){
 				const id = parseInt(result.Id);
 				setjobid(id);
-				executeRequest(result.Params.split("/"), undefined, fail, checkSafety, checkSafety2, safeQuery, ret2, id);
+				executeRequest((result.URL + result.URL2).split("/"), undefined, fail, checkSafety, checkSafety2, safeQuery, ret2, id);
 			});
 		});
 
