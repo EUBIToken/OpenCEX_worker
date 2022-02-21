@@ -33,6 +33,7 @@ console.log('');
 	const lockSQL = function(f){
 		if(SQL_locked){
 			SQL_queue.push(f);
+			console.log(SQL_queue.length);
 		} else{
 			SQL_locked = true;
 			f();
