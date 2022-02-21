@@ -349,7 +349,11 @@ console.log('');
 							if(jobAborted || lock2){
 								clearInterval(interval);
 							} else{
-								BlockchainManager.getTransactionReceipt(hash, async function(receipt){
+								BlockchainManager.getTransactionReceipt(hash, async function(receipt, error){
+									if(error){
+										console.log(error);
+										return;
+									}
 									console.log(JSON.stringify(receipt));
 									if(!receipt){
 										return;
