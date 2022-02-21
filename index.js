@@ -32,7 +32,8 @@ console.log('');
 	const SQL_queue = [];
 	const lockSQL = function(f){
 		if(SQL_locked){
-			SQL_queue.push(f);
+			SQL_queue.push(f)
+			console.log(SQL_queue);
 		} else{
 			SQL_locked = true;
 			f();
@@ -65,7 +66,6 @@ console.log('');
 					shift();
 				} else{
 					SQL_locked = false;
-					console.log("SQL unlocked!");
 				}
 				
 			};
@@ -249,7 +249,6 @@ console.log('');
 		}, 600000);
 		const methods = {
 			sendAndCreditWhenSecure: async function(){
-				console.log("sendAndCreditWhenSecure");
 				
 				//auth/method/tx/account/token/amount
 				const BlockchainManager = chains[safeshift()];
@@ -299,7 +298,6 @@ console.log('');
 						lock2 = true;
 						promise.off('confirmation', confirmation);
 						if(receipt.status){
-							console.log('step');
 							const selector = [" WHERE Coin = ", sqlescape(token), " AND UserID = ", sqlescape(account), ";"].join("");
 							safeQuery("LOCK TABLE Balances WRITE, WorkerTasks WRITE;", async function(){
 								safeQuery("SELECT Balance FROM Balances" + selector, async function(balance){
@@ -345,7 +343,6 @@ console.log('');
 						promise.on('confirmation', confirmation);
 					} else{
 						const hash = web3_sha3(tx, { encoding: "hex" });
-						console.log("polygonscan.com/tx/" + hash);
 						const interval = setInterval(async function(){
 							if(jobAborted || lock2){
 								clearInterval(interval);
@@ -360,7 +357,6 @@ console.log('');
 									}
 									
 									BlockchainManager.getBlockNumber(async function(error, blocknumber2){
-										console.log("Block number: " + blocknumber2.toString());
 										if(blocknumber2){
 											confirmation(blocknumber2 - receipt.blockNumber, receipt);
 										} else{
@@ -412,7 +408,6 @@ console.log('');
 		const method = methods[params.pop()];
 		if(method){
 			res = !!res;
-			console.log("request parsed!");
 			method();
 		} else if(res){
 			res.write('{"error": "Invalid request method!"}');
