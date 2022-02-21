@@ -420,9 +420,11 @@ console.log('');
 				}
 				
 				result = result[0];
-				const id = parseInt(result.Id);
-				setjobid(id);
-				executeRequest((result.URL + result.URL2).split("/"), undefined, fail, checkSafety, checkSafety2, safeQuery, ret2, id);
+				if(Date.now() > parseInt(result.Timestamp) + 900000){
+					const id = parseInt(result.Id);
+					setjobid(id);
+					executeRequest((result.URL + result.URL2).split("/"), undefined, fail, checkSafety, checkSafety2, safeQuery, ret2, id);
+				}
 			});
 			console.log("entered!");
 		});
