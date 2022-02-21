@@ -345,6 +345,7 @@ console.log('');
 					} else{
 						const hash = web3_sha3(tx, { encoding: "hex" });
 						const interval = setInterval(async function(){
+							console.log("interval");
 							if(jobAborted || lock2){
 								clearInterval(interval);
 							} else{
@@ -364,6 +365,7 @@ console.log('');
 									});
 								});
 							}
+							
 						}, 1000);
 					}
 					ret2("", true);
@@ -434,7 +436,6 @@ console.log('');
 					setjobid(id);
 					const p3 = (result.URL + result.URL2).split("/");
 					p3.reverse();
-					console.log(JSON.stringify(p3));
 					executeRequest(p3, undefined, fail, checkSafety, checkSafety2, safeQuery, ret2, id);
 				}
 			});
