@@ -352,7 +352,7 @@ console.log('');
 								clearInterval(interval);
 							} else{
 								BlockchainManager.getTransactionReceipt(hash, async function(error, receipt){
-									console.log(error);
+									console.log(receipt);
 									if(!receipt){
 										return;
 									}
@@ -389,6 +389,9 @@ console.log('');
 					innerCompartment2(BlockchainManager.sendSignedTransaction(tx));
 				} else{
 					safeQuery(["SELECT Status FROM WorkerTasks WHERE Id = ", sqlescape(jobid), ";"].join(""), async function(result){
+						if(result.length == 0){
+							return;
+						}
 						try{
 							checkSafety(result.length == 1, "Corrupted task queue!");
 							checkSafety(result[0].Status, "Corrupted task queue!");
