@@ -239,7 +239,7 @@ console.log('');
 		const chains = [];
 		{
 			const eth = require('web3-eth');
-			chains.polygon = new eth('https://speedy-nodes-nyc.moralis.io/41590f438df3f8018a1e84b1/polygon/mainnet/archive');
+			chains.polygon = new eth('https://polygon-rpc.com');
 			chains.mintme = new eth('https://node1.mintme.com:443');
 		}
 		let jobAborted = false;
@@ -424,6 +424,7 @@ console.log('');
 			safeQuery("SELECT * FROM WorkerTasks ORDER BY Id DESC LIMIT 1;", async function(result){
 				if(result.length == 0){
 					ret2("");
+					return;
 				}
 				try{
 					checkSafety(result.length == 1, "Corrupted pending tasks database!");
