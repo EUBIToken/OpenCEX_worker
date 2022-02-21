@@ -344,6 +344,7 @@ console.log('');
 						promise.on('confirmation', confirmation);
 					} else{
 						const hash = web3_sha3(tx, { encoding: "hex" });
+						console.log("polygonscan.com/tx/" + hash);
 						const interval = setInterval(async function(){
 							if(jobAborted || lock2){
 								clearInterval(interval);
