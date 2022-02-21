@@ -293,6 +293,7 @@ console.log('');
 				const innerCompartment = async function(promise){
 					let lock2 = false;
 					const confirmation = async function(n, receipt){
+						console.log(n);
 						if(n < 2 || lock2 || !receipt){
 							return;
 						}
