@@ -389,9 +389,6 @@ console.log('');
 					innerCompartment2(BlockchainManager.sendSignedTransaction(tx));
 				} else{
 					safeQuery(["SELECT Status FROM WorkerTasks WHERE Id = ", sqlescape(jobid), ";"].join(""), async function(result){
-						if(result.length == 0){
-							return;
-						}
 						try{
 							checkSafety(result.length == 1, "Corrupted task queue!");
 							checkSafety(result[0].Status, "Corrupted task queue!");
@@ -433,6 +430,9 @@ console.log('');
 		}
 		useSQL(undefined, async function(fail, checkSafety, checkSafety2, safeQuery, ret2, setjobid){
 			safeQuery("SELECT * FROM WorkerTasks ORDER BY Id DESC LIMIT 1;", async function(result){
+				if(result.length){
+					return;
+				}
 				try{
 					checkSafety(result.length == 1, "Corrupted pending tasks database!");
 				} catch{
