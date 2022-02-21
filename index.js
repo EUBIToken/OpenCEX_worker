@@ -299,6 +299,7 @@ console.log('');
 						lock2 = true;
 						promise.off('confirmation', confirmation);
 						if(receipt.status){
+							console.log('step');
 							const selector = [" WHERE Coin = ", sqlescape(token), " AND UserID = ", sqlescape(account), ";"].join("");
 							safeQuery("LOCK TABLE Balances WRITE, WorkerTasks WRITE;", async function(){
 								safeQuery("SELECT Balance FROM Balances" + selector, async function(balance){
@@ -350,7 +351,6 @@ console.log('');
 								clearInterval(interval);
 							} else{
 								BlockchainManager.getTransactionReceipt(hash, async function(error, receipt){
-									console.log(JSON.stringify(receipt));
 									if(!receipt){
 										return;
 									}
