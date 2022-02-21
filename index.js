@@ -33,7 +33,6 @@ console.log('');
 	const lockSQL = function(f){
 		if(SQL_locked){
 			SQL_queue.push(f)
-			console.log(SQL_queue);
 		} else{
 			SQL_locked = true;
 			f();
@@ -424,7 +423,7 @@ console.log('');
 		useSQL(undefined, async function(fail, checkSafety, checkSafety2, safeQuery, ret2, setjobid){
 			safeQuery("SELECT * FROM WorkerTasks ORDER BY Id DESC LIMIT 1;", async function(result){
 				if(result.length == 0){
-					return;
+					ret2("");
 				}
 				try{
 					checkSafety(result.length == 1, "Corrupted pending tasks database!");
