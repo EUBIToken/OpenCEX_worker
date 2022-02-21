@@ -352,10 +352,11 @@ console.log('');
 								clearInterval(interval);
 							} else{
 								BlockchainManager.getTransactionReceipt(hash, async function(error, receipt){
+									console.log(receipt);
 									if(!receipt){
 										return;
 									}
-									console.log(receipt.blockNumber);
+									
 									if(!receipt.blockNumber){
 										return;
 									}
