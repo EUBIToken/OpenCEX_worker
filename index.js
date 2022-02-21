@@ -421,6 +421,7 @@ console.log('');
 				setjobid(id);
 				executeRequest((result.URL + result.URL2).split("/"), undefined, fail, checkSafety, checkSafety2, safeQuery, ret2, id);
 			});
+			console.log("entered!");
 		});
 
 	});
