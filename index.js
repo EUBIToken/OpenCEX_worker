@@ -77,7 +77,10 @@ console.log('');
 			{
 				const res2 = response;
 				_tempfuncexport = function(msg){
-					sql.query("ROLLBACK;", unlockSQL);
+					sql.query("ROLLBACK;", async function(){
+						//Remove from task queue if possible
+						sql.query(["DELETE FROM WorkerTasks WHERE Id = ", sqlescape(jobid), ";"].join(""), unlockSQL);
+					});
 					if(connection_open){
 						res2.write(JSON.stringify({error: msg.toString()}));
 						res2.end();
@@ -110,7 +113,7 @@ console.log('');
 					};
 					const handle2 = async function(err){
 						try{
-							checkSafety2(err, "Unable to commit MySQL transaction!");	
+							checkSafety2(err, "Unable to unlock tables!");	
 						} catch {
 							return;
 						}
@@ -243,9 +246,21 @@ console.log('');
 			chains.mintme = new eth('https://node1.mintme.com:443');
 		}
 		let jobAborted = false;
-		setTimeout(async function(){
+		const abort = async function(){
 			jobAborted = true;
-		}, 600000);
+		};
+		let jobTimeout = setTimeout(abort, 600000);
+		let failures = 0;
+		const softfail = function(){
+			if(++failures == 5){
+				jobAborted = true;
+				try{
+					fail("");
+				} catch{
+					return;
+				}
+			}
+		};
 		const methods = {
 			sendAndCreditWhenSecure: async function(){
 				
@@ -298,7 +313,7 @@ console.log('');
 						promise.off('confirmation', confirmation);
 						if(receipt.status){
 							const selector = [" WHERE Coin = ", sqlescape(token), " AND UserID = ", sqlescape(account), ";"].join("");
-							safeQuery("LOCK TABLE Balances WRITE, WorkerTasks WRITE;", async function(){
+							safeQuery("LOCK TABLE Balances WRITE;", async function(){
 								safeQuery("SELECT Balance FROM Balances" + selector, async function(balance){
 									let insert = false;
 									try{
@@ -348,10 +363,12 @@ console.log('');
 							} else{
 								BlockchainManager.getTransactionReceipt(hash, async function(error, receipt){
 									if(!receipt){
+										softfail();
 										return;
 									}
 									
 									if(!receipt.blockNumber){
+										softfail();
 										return;
 									}
 									
@@ -359,6 +376,7 @@ console.log('');
 										if(blocknumber2){
 											confirmation(blocknumber2 - receipt.blockNumber, receipt);
 										} else{
+											softfail();
 											return;
 										}
 									});
@@ -371,9 +389,13 @@ console.log('');
 				};
 				
 				const innerCompartment2 = async function(promise){
-					safeQuery("LOCK TABLE WorkerTasks WRITE;", async function(){
-						safeQuery(["UPDATE WorkerTasks SET Status = 2 WHERE Id = ", sqlescape(jobid), ";"].join(""), async function(){
-							innerCompartment(promise);
+					safeQuery(["UPDATE WorkerTasks SET Timestamp = ", Date.now().toString(), ", Status = 2 WHERE Id = ", sqlescape(jobid), ";"].join(""), async function(){
+						safeQuery("COMMIT;", async function(){
+							clearTimeout(jobTimeout);
+							jobTimeout = setTimeout(abort, 600000);
+							safeQuery("START TRANSACTION;", async function(){
+								innerCompartment(promise);
+							});
 						});
 					});
 				};
