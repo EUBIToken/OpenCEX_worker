@@ -122,6 +122,7 @@ console.log('');
 							if(err){
 								handle3(true);
 							} else{
+								console.log("committed!");
 								unlockSQL_sync();
 								handle3(false);
 							}
