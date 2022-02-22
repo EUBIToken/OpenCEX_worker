@@ -392,7 +392,6 @@ console.log('');
 				const innerCompartment2 = async function(promise){
 					safeQuery(["UPDATE WorkerTasks SET LastTouched = ", Date.now().toString(), ", Status = 2 WHERE Id = ", sqlescape(jobid), ";"].join(""), async function(){
 						safeQuery("COMMIT;", async function(){
-							console.log("made it here");
 							clearTimeout(jobTimeout);
 							jobTimeout = setTimeout(abort, 600000);
 							safeQuery("START TRANSACTION;", async function(){
