@@ -151,7 +151,7 @@ console.log('');
 			const safeQuery = async function(query, callback){
 				sql.query(query, async function(err, res){
 					try{
-						checkSafety2(err, "SQL Query returned error!");
+						checkSafety2(err, "SQL Query returned error: " + query);
 					} catch{
 						return;
 					}
