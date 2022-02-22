@@ -132,7 +132,7 @@ console.log('');
 					};
 					const handle = async function(err){
 						try{
-							checkSafety2(err, "Unable to update task status!");	
+							checkSafety2(err, "Unable to update task status: " + err.toString());	
 						} catch {
 							return;
 						}
