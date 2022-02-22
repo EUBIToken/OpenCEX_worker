@@ -113,7 +113,7 @@ console.log('');
 					};
 					const handle2 = async function(err){
 						try{
-							checkSafety2(err, "Unable to unlock tables!");	
+							checkSafety2(err, "Unable to update task status!");	
 						} catch {
 							return;
 						}
@@ -133,18 +133,18 @@ console.log('');
 					};
 					const handle = async function(err){
 						try{
-							checkSafety2(err, "Unable to update task status: " + err.toString());	
+							checkSafety2(err, "Unable to unlock tables!");	
 						} catch {
 							return;
 						}
 						
-						sql.query("UNLOCK TABLES;", handle2);
+						sql.query(["DELETE FROM WorkerTasks WHERE Id = ", sqlescape(jobid), ";"].join(""), handle2);
 						
 					};
 					if(nocommit){
 						handle3(false);
 					} else{
-						sql.query(["DELETE FROM WorkerTasks WHERE Id = ", sqlescape(jobid), ";"].join(""), handle);
+						sql.query("UNLOCK TABLES;", handle);
 					}
 				};
 			}
