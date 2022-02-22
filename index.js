@@ -174,6 +174,7 @@ console.log('');
 						fail(msg);
 					}
 				}, checkSafety2, safeQuery, _tempfuncexport, function(ji){
+					console.log("entered!");
 					try{
 						checkSafety2(jobid, "Job ID already set!");
 					} catch{
