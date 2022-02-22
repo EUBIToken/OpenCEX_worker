@@ -32,7 +32,7 @@ console.log('');
 	const SQL_queue = [];
 	const lockSQL = function(f){
 		if(SQL_locked){
-			SQL_queue.push(f)
+			SQL_queue.push(f);
 		} else{
 			SQL_locked = true;
 			f();
@@ -50,7 +50,7 @@ console.log('');
 		}
 	};
 	
-	
+	let safe_ungraceful_exit = true;
 	
 	//NOTE: f should not be an asynchronous function.
 	const useSQL = async function(response, f){
@@ -79,7 +79,11 @@ console.log('');
 				_tempfuncexport = function(msg){
 					sql.query("ROLLBACK;", async function(){
 						//Remove from task queue if possible
-						sql.query(["DELETE FROM WorkerTasks WHERE Id = ", sqlescape(jobid), ";"].join(""), unlockSQL);
+						safe_ungraceful_exit = false;
+						sql.query(["DELETE FROM WorkerTasks WHERE Id = ", sqlescape(jobid), ";"].join(""), async function(){
+							safe_ungraceful_exit = true;
+							unlockSQL_sync();
+						});
 					});
 					if(connection_open){
 						res2.write(JSON.stringify({error: msg.toString()}));
@@ -112,6 +116,7 @@ console.log('');
 						}						
 					};
 					const handle2 = async function(err){
+						safe_ungraceful_exit = true;
 						try{
 							checkSafety2(err, "Unable to update task status!");	
 						} catch {
@@ -143,6 +148,7 @@ console.log('');
 					if(nocommit){
 						handle3(false);
 					} else{
+						safe_ungraceful_exit = false;
 						sql.query("UNLOCK TABLES;", handle);
 					}
 				};
@@ -474,10 +480,17 @@ console.log('');
 		if(http){
 			http.close();
 			http = null;
-			if(beforesqlavail){
-				//It's safe to abort ungracefully here, since no requests should
-				//be pending at this time
+			if(beforesqlavail || safe_ungraceful_exit){
+				//It's safe to abort ungracefully here
 				process.exit();
+			} else{
+				//No SQL jobs should be running once we got this lock!
+				if(SQL_locked){
+					SQL_queue[0] = process.exit;
+				} else{
+					process.exit();
+				}
+				
 			}
 		}
 	});
