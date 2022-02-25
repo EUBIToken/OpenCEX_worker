@@ -269,8 +269,9 @@ console.log('');
 		};
 		const methods = {
 			sendAndCreditWhenSecure: async function(){
+				console.log("method called!");
 				
-				//auth/method/tx/account/token/amount
+				//auth/method/chain/tx/account/token/amount
 				const BlockchainManager = chains[safeshift()];
 				try{
 					checkSafety2(jobAborted, "Job timed out!");
@@ -310,6 +311,7 @@ console.log('');
 				}
 				
 				const innerCompartment = async function(promise){
+					console.log("inner compartment entered!");
 					let lock2 = false;
 					const confirmation = async function(n, receipt){
 						if(n < 10 || lock2 || !receipt){
