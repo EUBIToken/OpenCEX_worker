@@ -207,7 +207,9 @@ console.log('');
 		parallelCreditLoop = setInterval(async function(){
 			//Low-priority lock
 			if(SQL_locked || beforesqlavail || parallelCreditQueue.length == 0){
-				console.log(SQL_queue);
+				SQL_queue.push(async function(){
+					console.log("locks");
+				});
 				return;
 			} else {
 				SQL_locked = true;
