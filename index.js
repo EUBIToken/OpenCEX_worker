@@ -271,7 +271,7 @@ console.log('');
 								} catch{
 									return;
 								}
-								
+								console.log("beforecredit");
 								sql.query(["UPDATE Balances SET Balance = ", balance, selector].join(""), async function(err){
 									res.write(err ? "error" : "ok");
 									res.end();
