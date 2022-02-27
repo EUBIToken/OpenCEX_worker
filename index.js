@@ -207,6 +207,7 @@ console.log('');
 			SQL_locked = true;
 			
 			if(parallelCreditQueue.length != 0){
+				console.log("processing");
 				sql.query("START TRANSACTION;", async function(err){
 					if(err){
 						unlockSQL();
@@ -322,6 +323,7 @@ console.log('');
 						res.end();
 						return;
 					}
+					console.log("entered!");
 					//to/coin/amount
 					parallelCreditQueue.push([params[0], params[1], params[2], res]);
 				}
