@@ -102,7 +102,6 @@ console.log('');
 			{
 				const res2 = response;
 				_tempfuncexport = async function(data, nocommit){
-					console.log("returns");
 					const handle3 = async function(err){
 						try{
 							checkSafety2(err, "Unable to commit MySQL transaction!");	
@@ -117,7 +116,6 @@ console.log('');
 						}						
 					};
 					const handle2 = async function(err){
-						console.log("handle2");
 						try{
 							checkSafety2(err, "Unable to update task status!");	
 						} catch {
@@ -211,7 +209,6 @@ console.log('');
 				return;
 			} else {
 				SQL_locked = true;
-				console.log("processing");
 				sql.query("START TRANSACTION;", async function(err){
 					if(err){
 						unlockSQL();
@@ -219,15 +216,9 @@ console.log('');
 					}
 
 					
-					sql.query("LOCK TABLE Balances WRITE;", async function(err){
+					sql.query("LOCK TABLES Balances WRITE;", async function(err){
 						if(err){
 							unlockSQL();
-							return;
-						}
-
-						try{
-							safe_assert_false(err);
-						} catch{
 							return;
 						}
 						
@@ -327,7 +318,6 @@ console.log('');
 						res.end();
 						return;
 					}
-					console.log("entered!");
 					//to/coin/amount
 					parallelCreditQueue.push([params[0], params[1], params[2], res]);
 				}
