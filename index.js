@@ -102,6 +102,7 @@ console.log('');
 			{
 				const res2 = response;
 				_tempfuncexport = async function(data, nocommit){
+					console.log("returns");
 					const handle3 = async function(err){
 						try{
 							checkSafety2(err, "Unable to commit MySQL transaction!");	
@@ -116,7 +117,7 @@ console.log('');
 						}						
 					};
 					const handle2 = async function(err){
-						
+						console.log("handle2");
 						try{
 							checkSafety2(err, "Unable to update task status!");	
 						} catch {
@@ -207,9 +208,6 @@ console.log('');
 		parallelCreditLoop = setInterval(async function(){
 			//Low-priority lock
 			if(SQL_locked || beforesqlavail || parallelCreditQueue.length == 0){
-				SQL_queue.push(async function(){
-					console.log("locks");
-				});
 				return;
 			} else {
 				SQL_locked = true;
