@@ -227,6 +227,7 @@ console.log('');
 						}
 						
 						const callback2 = async function(){
+							console.log("callback");
 							let current = parallelCreditQueue.pop();
 							if(current){
 								//Append next cycle to event loop
