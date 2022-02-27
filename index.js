@@ -31,6 +31,7 @@ console.log('');
 	let SQL_locked = false;
 	const SQL_queue = [];
 	const lockSQL = function(f){
+		throw "DO NOT LOCK SQL FOR THIS TEST!";
 		if(SQL_locked){
 			SQL_queue.push(f);
 		} else{
@@ -287,7 +288,7 @@ console.log('');
 					});
 				});
 			}
-		}, 127);
+		}, 100);
 	}
 	
 	let http = require('http').createServer(async function(req, res){
