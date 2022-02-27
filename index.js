@@ -31,7 +31,6 @@ console.log('');
 	let SQL_locked = false;
 	const SQL_queue = [];
 	const lockSQL = function(f){
-		throw "DO NOT LOCK SQL FOR THIS TEST!";
 		if(SQL_locked){
 			SQL_queue.push(f);
 		} else{
@@ -60,8 +59,9 @@ console.log('');
 			SQL_locked = false;
 		}	
 	};
-	const unlockSQL = async function(){
-		unlockSQL_sync();
+	const unlockSQL = function(){
+		//unlockSQL_sync();
+		throw "DO NOT UNLOCK SQL FOR THIS TEST!";
 	};
 	
 	let safe_ungraceful_exit = true;
