@@ -49,6 +49,19 @@ console.log('');
 			realcall();
 		}
 	};
+	const unlockSQL_sync = function(){
+		//If there is nothing waiting to use SQL, unlock!
+		//otherwise, execute next SQL-using task without releasing and reacquiring lock!
+		const shift = SQL_queue.shift();
+		if(shift){
+			shift();
+		} else{
+			SQL_locked = false;
+		}	
+	};
+	const unlockSQL = async function(){
+		unlockSQL_sync();
+	};
 	
 	let safe_ungraceful_exit = true;
 	
@@ -57,20 +70,6 @@ console.log('');
 		awaitSQL(async function(){
 			let jobid = undefined;
 			//Core safety methods
-			const unlockSQL_sync = function(){
-				//If there is nothing waiting to use SQL, unlock!
-				//otherwise, execute next SQL-using task without releasing and reacquiring lock!
-				const shift = SQL_queue.shift();
-				if(shift){
-					shift();
-				} else{
-					SQL_locked = false;
-				}
-				
-			};
-			const unlockSQL = async function(){
-				unlockSQL_sync();
-			};
 			
 			let connection_open = !!response; //If we are in connectionless mode, then this would come in handy!
 			let _tempfuncexport;
@@ -196,6 +195,100 @@ console.log('');
 	const web3_sha3 = web3utils.sha3;
 	web3utils = undefined;
 	
+	let parallelCreditLoop;
+	let pcl_running = false;
+	const parallelCreditQueue = [];
+	{
+		parallelCreditLoop = setInterval(async function(){
+			//Low-priority lock
+			if(SQL_locked || beforesqlavail || pcl_running){
+				return;
+			}
+			SQL_locked = true;
+			
+			if(parallelCreditQueue.length != 0){
+				sql.query("START TRANSACTION;", async function(err){
+					if(err){
+						unlockSQL();
+						return;
+					}
+
+					
+					sql.query("LOCK TABLE Balances WRITE;", async function(err){
+						if(err){
+							unlockSQL();
+							return;
+						}
+
+						try{
+							safe_assert_false(err);
+						} catch{
+							return;
+						}
+						
+						const callback2 = async function(){
+							let current = parallelCreditQueue.pop();
+							if(current){
+								//Append next cycle to event loop
+								callback2();
+							} else{
+								//Ran out of messages (not error)
+								sql.query("UNLOCK TABLES;", unlockSQL);
+								return;
+							}
+							
+							//NOTE: WE DO NOT UNLOCK SQL after this bit!
+							const amount = current[0];
+							const selector = [" WHERE Coin = ", sqlescape(current[1]), " AND UserID = ", sqlescape(current[2]), ";"].join("");
+							const res = current[3];
+							current = undefined;
+							
+							const fail = function(){
+								res.write("error");
+								res.end();
+								throw "";
+							};
+							const safe_assert_true = function(v){
+								if(!v){
+									fail();
+								}
+							};
+							const safe_assert_false = function(v){
+								if(v){
+									fail();
+								}
+							};
+							
+							sql.query(["SELECT FROM Balances", selector].join(""), async function(error, result){
+								let balance = undefined;
+								try{
+									safe_assert_false(error);
+									safe_assert_true(result.length == 1);
+									safe_assert_true(result[0]);
+									safe_assert_true(result[0].Balance);
+									try{
+										balance = sqlescape((new BigNumber(result[0].Balance)).add(new BigNumber(amount)).toString());
+									} catch{
+										fail();
+									}
+								} catch{
+									return;
+								}
+								
+								sql.query(["UPDATE Balances SET Balance = ", balance, selector].join(""), async function(err){
+									res.write(err ? "error" : "ok");
+									res.end();
+								});
+							});
+						};
+						callback2();
+
+					});
+				});
+			}
+		}, 100);
+	}
+	
 	let http = require('http').createServer(async function(req, res){
 		if(req.url.length == 0){
 			res.write('{"error": "Invalid request!"}');
@@ -216,6 +309,26 @@ console.log('');
 				res.end();
 				return;
 			}
+		}
+		const nosql_methods = ["parallelCredit"];
+		if(nosql_methods.indexOf(params[params.length - 1]) > -1){
+			//Execute request without SQL
+			//NOTE: If we run into trouble, just return. We have no SQL transactions to revert.
+			const methods = {
+				parallelCredit: async function(){
+					if(params.length != 3){
+						res.write("error");
+						res.end();
+						return;
+					}
+					//to/coin/amount
+					parallelCreditQueue.push([params[0], params[1], params[2], res]);
+				}
+			};
+			
+			//Already checked
+			methods[params.pop()]();
+			return;
 		}
 		useSQL(res, async function(fail, checkSafety, checkSafety2, safeQuery, ret2, setjobid){
 			//admit request to task queue (NOTE: strip authorization and initial spacer)
@@ -478,6 +591,17 @@ console.log('');
 	//do this nearly ended with the catastrophic failure of the EUBI-bEUBI bridge.
 	process.on('SIGTERM', async function(){
 		if(http){
+			if(parallelCreditLoop){
+				parallelCreditLoop = undefined;	
+				parallelCreditQueue.length = 0;
+				clearInterval(parallelCreditLoop);
+				setTimeout(executeExit, 1000);
+			} else{
+				executeExit();
+			}
+		}
+		
+		const executeExit = async function(){
 			http.close();
 			http = null;
 			if(beforesqlavail || safe_ungraceful_exit){
@@ -492,6 +616,6 @@ console.log('');
 				}
 				
 			}
-		}
+		};
 	});
 }
