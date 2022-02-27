@@ -196,17 +196,16 @@ console.log('');
 	web3utils = undefined;
 	
 	let parallelCreditLoop;
-	let pcl_running = false;
 	const parallelCreditQueue = [];
 	{
 		parallelCreditLoop = setInterval(async function(){
 			//Low-priority lock
-			if(SQL_locked || beforesqlavail || pcl_running){
+			if(SQL_locked || beforesqlavail){
 				return;
 			}
-			SQL_locked = true;
 			
 			if(parallelCreditQueue.length != 0){
+				SQL_locked = true;
 				console.log("processing");
 				sql.query("START TRANSACTION;", async function(err){
 					if(err){
