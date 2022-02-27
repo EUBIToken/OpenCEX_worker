@@ -591,16 +591,6 @@ console.log('');
 	//if we get a SIGTERM, stop accepting new requests. Failure to
 	//do this nearly ended with the catastrophic failure of the EUBI-bEUBI bridge.
 	process.on('SIGTERM', async function(){
-		if(http){
-			if(parallelCreditLoop){
-				parallelCreditLoop = undefined;	
-				parallelCreditQueue.length = 0;
-				clearInterval(parallelCreditLoop);
-				setTimeout(executeExit, 1000);
-			} else{
-				executeExit();
-			}
-		}
 		
 		const executeExit = async function(){
 			http.close();
@@ -618,5 +608,18 @@ console.log('');
 				
 			}
 		};
+		
+		if(http){
+			if(parallelCreditLoop){
+				parallelCreditLoop = undefined;	
+				parallelCreditQueue.length = 0;
+				clearInterval(parallelCreditLoop);
+				setTimeout(executeExit, 1000);
+			} else{
+				executeExit();
+			}
+		}
+		
+		
 	});
 }
