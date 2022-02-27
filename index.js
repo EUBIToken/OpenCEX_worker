@@ -108,6 +108,7 @@ console.log('');
 						} catch {
 							return;
 						}
+						safe_ungraceful_exit = true;
 						if(connection_open){
 							res2.write(JSON.stringify({returns: data}));
 							res2.end();
@@ -115,7 +116,7 @@ console.log('');
 						}						
 					};
 					const handle2 = async function(err){
-						safe_ungraceful_exit = true;
+						
 						try{
 							checkSafety2(err, "Unable to update task status!");	
 						} catch {
@@ -206,8 +207,7 @@ console.log('');
 		parallelCreditLoop = setInterval(async function(){
 			//Low-priority lock
 			if(SQL_locked || beforesqlavail || parallelCreditQueue.length == 0){
-				console.log(SQL_locked);
-				console.log(beforesqlavail);
+				console.log(SQL_queue);
 				return;
 			} else {
 				SQL_locked = true;
