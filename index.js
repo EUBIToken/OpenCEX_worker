@@ -201,6 +201,7 @@ console.log('');
 		parallelCreditLoop = setInterval(async function(){
 			//Low-priority lock
 			if(SQL_locked || beforesqlavail){
+				console.log("not possible");
 				return;
 			}
 			
