@@ -59,9 +59,8 @@ console.log('');
 			SQL_locked = false;
 		}	
 	};
-	const unlockSQL = function(){
-		//unlockSQL_sync();
-		throw "DO NOT UNLOCK SQL FOR THIS TEST!";
+	const unlockSQL = async function(){
+		unlockSQL_sync();
 	};
 	
 	let safe_ungraceful_exit = true;
@@ -142,7 +141,12 @@ console.log('');
 							return;
 						}
 						
-						sql.query(["DELETE FROM WorkerTasks WHERE Id = ", sqlescape(jobid), ";"].join(""), handle2);
+						if(jobid){
+							sql.query(["DELETE FROM WorkerTasks WHERE Id = ", sqlescape(jobid), ";"].join(""), handle2);
+						} else{
+							handle2(false);
+						}
+						
 						
 					};
 					if(nocommit){
