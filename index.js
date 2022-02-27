@@ -256,10 +256,11 @@ console.log('');
 								}
 							};
 							
-							sql.query(["SELECT FROM Balances", selector].join(""), async function(error, result){
+							sql.query(["SELECT Balance FROM Balances", selector].join(""), async function(error, result){
 								let balance = undefined;
 								try{
 									safe_assert_false(error);
+									safe_assert_true(result);
 									safe_assert_true(result.length == 1);
 									safe_assert_true(result[0]);
 									safe_assert_true(result[0].Balance);
