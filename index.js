@@ -223,7 +223,6 @@ console.log('');
 						}
 						
 						const callback2 = async function(){
-							console.log("callback");
 							let current = parallelCreditQueue.pop();
 							if(current){
 								//Append next cycle to event loop
@@ -272,7 +271,6 @@ console.log('');
 								} catch{
 									return;
 								}
-								console.log("beforecredit");
 								sql.query(["UPDATE Balances SET Balance = ", balance, selector].join(""), async function(err){
 									res.write(err ? "error" : "ok");
 									res.end();
