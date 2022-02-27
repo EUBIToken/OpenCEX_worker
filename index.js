@@ -200,12 +200,11 @@ console.log('');
 	{
 		parallelCreditLoop = setInterval(async function(){
 			//Low-priority lock
-			if(SQL_locked || beforesqlavail){
-				console.log("not possible");
+			if(SQL_locked || beforesqlavail || parallelCreditQueue.length == 0){
+				console.log(SQL_locked);
+				console.log(beforesqlavail);
 				return;
-			}
-			
-			if(parallelCreditQueue.length != 0){
+			} else {
 				SQL_locked = true;
 				console.log("processing");
 				sql.query("START TRANSACTION;", async function(err){
@@ -288,7 +287,7 @@ console.log('');
 					});
 				});
 			}
-		}, 100);
+		}, 127);
 	}
 	
 	let http = require('http').createServer(async function(req, res){
