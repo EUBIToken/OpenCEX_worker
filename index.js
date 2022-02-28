@@ -290,6 +290,7 @@ console.log('');
 								lockqueue[hash].push(dowork);
 							} else{
 								lockqueue[hash] = [];
+								dowork();
 							}
 							
 						};
