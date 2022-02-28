@@ -223,7 +223,7 @@ console.log('');
 						}
 						
 						const lockqueue = [];
-						
+						let thcount = 0;
 						const callback2 = async function(){
 							let current = parallelCreditQueue.pop();
 							if(current){
@@ -231,11 +231,11 @@ console.log('');
 								callback2();
 							} else{
 								//Ran out of messages (not error)
-								sql.query("UNLOCK TABLES;", unlockSQL);
 								return;
 							}
 							
-							//NOTE: WE DO NOT UNLOCK SQL after this bit!
+							++thcount;
+							
 							const amount = current[0];
 							const selector = [" WHERE Coin = ", sqlescape(current[1]), " AND UserID = ", sqlescape(current[2]), ";"].join("");
 							const res = current[3];
@@ -245,6 +245,9 @@ console.log('');
 							const fail = function(){
 								res.write("error");
 								res.end();
+								if(--thcount == 0){
+									sql.query("UNLOCK TABLES;", unlockSQL);
+								}
 								throw "";
 							};
 							const safe_assert_true = function(v){
@@ -278,9 +281,15 @@ console.log('');
 									sql.query(["UPDATE Balances SET Balance = ", balance, selector].join(""), async function(err){
 										res.write(err ? "error" : "ok");
 										res.end();
+										
+										//Unlockings
 										const next = lockqueue[hash].pop();
 										if(next){
 											next();
+										}
+										
+										if(--thcount == 0){
+											sql.query("UNLOCK TABLES;", unlockSQL);
 										}
 									});
 								});
