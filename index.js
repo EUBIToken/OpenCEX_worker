@@ -286,6 +286,8 @@ console.log('');
 										const next = lockqueue[hash].pop();
 										if(next){
 											next();
+										} else{
+											lockqueue[hash] = undefined;
 										}
 										
 										if(--thcount == 0){
