@@ -222,6 +222,8 @@ console.log('');
 							return;
 						}
 						
+						const lockqueue = [];
+						
 						const callback2 = async function(){
 							let current = parallelCreditQueue.pop();
 							if(current){
@@ -237,6 +239,7 @@ console.log('');
 							const amount = current[0];
 							const selector = [" WHERE Coin = ", sqlescape(current[1]), " AND UserID = ", sqlescape(current[2]), ";"].join("");
 							const res = current[3];
+							const hash = [current[2], current[1]].join("_");
 							current = undefined;
 							
 							const fail = function(){
@@ -255,27 +258,40 @@ console.log('');
 								}
 							};
 							
-							sql.query(["SELECT Balance FROM Balances", selector].join(""), async function(error, result){
-								let balance = undefined;
-								try{
-									safe_assert_false(error);
-									safe_assert_true(result);
-									safe_assert_true(result.length == 1);
-									safe_assert_true(result[0]);
-									safe_assert_true(result[0].Balance);
+							const dowork = async function(){
+								sql.query(["SELECT Balance FROM Balances", selector].join(""), async function(error, result){
+									let balance = undefined;
 									try{
-										balance = sqlescape((new BigNumber(result[0].Balance)).add(new BigNumber(amount)).toString());
+										safe_assert_false(error);
+										safe_assert_true(result);
+										safe_assert_true(result.length == 1);
+										safe_assert_true(result[0]);
+										safe_assert_true(result[0].Balance);
+										try{
+											balance = sqlescape((new BigNumber(result[0].Balance)).add(new BigNumber(amount)).toString());
+										} catch{
+											fail();
+										}
 									} catch{
-										fail();
+										return;
 									}
-								} catch{
-									return;
-								}
-								sql.query(["UPDATE Balances SET Balance = ", balance, selector].join(""), async function(err){
-									res.write(err ? "error" : "ok");
-									res.end();
+									sql.query(["UPDATE Balances SET Balance = ", balance, selector].join(""), async function(err){
+										res.write(err ? "error" : "ok");
+										res.end();
+										const next = lockqueue[hash].pop();
+										if(next){
+											next();
+										}
+									});
 								});
-							});
+							};
+							
+							if(lockqueue[hash]){
+								lockqueue[hash].push(dowork);
+							} else{
+								lockqueue[hash] = [];
+							}
+							
 						};
 						callback2();
 
@@ -588,8 +604,6 @@ console.log('');
 	process.on('SIGTERM', async function(){
 		
 		const executeExit = async function(){
-			http.close();
-			http = null;
 			if(beforesqlavail || safe_ungraceful_exit){
 				//It's safe to abort ungracefully here
 				process.exit();
@@ -605,11 +619,12 @@ console.log('');
 		};
 		
 		if(http){
+			http.close();
+			http = null;
 			if(parallelCreditLoop){
 				parallelCreditLoop = undefined;	
 				parallelCreditQueue.length = 0;
-				clearInterval(parallelCreditLoop);
-				setTimeout(executeExit, 1000);
+				setTimeout(executeExit, 5000);
 			} else{
 				executeExit();
 			}
