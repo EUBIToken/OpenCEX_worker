@@ -622,7 +622,9 @@ console.log('');
 			} else{
 				//No SQL jobs should be running once we got this lock!
 				if(SQL_locked){
-					SQL_queue[0] = process.exit;
+					SQL_queue[0] = async function(){
+						process.exit(); //Fix bug
+					};
 				} else{
 					process.exit();
 				}
